@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/apex/go-apex"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/guregu/dynamo"
 )
 
 type MackerelWebhook struct {
@@ -40,14 +43,15 @@ type MackerelWebhook struct {
 	OrgName string `json:"orgName"`
 }
 
-type Response struct {
-	AlertID   string `json:"alertId"`
-	IsOpen    bool   `json:"isOpen"`
-	Title     string `json:"title"`
-	Status    string `json:"status"`
-	AlertURL  string `json:"alertUrl"`
-	Trigger   string `json:"trigger"`
-	CreatedAt int64  `json:"createdAt"`
+type AlertEvent struct {
+	OrgName   string `dynamo:"OrgName" json:"orgName"`
+	CreatedAt int64  `dynamo:"CreatedAt" json:"createdAt"`
+	AlertID   string `dynamo:"AlertId" json:"alertId"`
+	Status    string `dynamo:"Status" json:"status"`
+	IsOpen    int    `dynamo:"IsOpen" json:"isOpen"`
+	Title     string `dynamo:"Title" json:"title"`
+	AlertURL  string `dynamo:"AlertUrl" json:"alertUrl"`
+	Trigger   string `dynamo:"Trigger" json:"trigger"`
 }
 
 func main() {
@@ -58,16 +62,33 @@ func main() {
 			return nil, err
 		}
 
-		response := Response{
-			AlertID:   "hogehoge123",
-			IsOpen:    mackerel.Alert.IsOpen,
-			Title:     "hogehoge alert",
-			Status:    mackerel.Alert.Status,
-			AlertURL:  mackerel.Alert.URL,
-			Trigger:   mackerel.Alert.Trigger,
-			CreatedAt: mackerel.Alert.CreatedAt,
+		db := dynamo.New(session.New(), &aws.Config{
+			Region: aws.String("ap-northeast-1"),
+		})
+		table := db.Table("Alert")
+
+		var isOpen int
+		if mackerel.Alert.IsOpen {
+			isOpen = 1
+		} else {
+			isOpen = 0
 		}
 
-		return response, nil
+		evt := AlertEvent{
+			OrgName:   mackerel.OrgName,
+			CreatedAt: mackerel.Alert.CreatedAt,
+			AlertID:   "hogehoge123",
+			Status:    mackerel.Alert.Status,
+			IsOpen:    isOpen,
+			Title:     "hogehoge alert",
+			AlertURL:  mackerel.Alert.URL,
+			Trigger:   mackerel.Alert.Trigger,
+		}
+
+		if err := table.Put(evt).Run(); err != nil {
+			return nil, err
+		}
+
+		return evt, nil
 	})
 }

@@ -30,7 +30,7 @@ resource "aws_dynamodb_table" "alert_table" {
 
   attribute {
     name = "CreatedAt"
-    type = "S"
+    type = "N"
   }
 
   attribute {
@@ -45,7 +45,7 @@ resource "aws_dynamodb_table" "alert_table" {
 
   attribute {
     name = "IsOpen"
-    type = "S"
+    type = "N"
   }
 
   tags {
