@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/apex/go-apex"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/guregu/dynamo"
 )
 
 type Alerts struct {
@@ -15,37 +18,24 @@ type Alert struct {
 	OrgName   string `json:"orgName"`
 	Title     string `json:"title"`
 	Status    string `json:"status"`
-	IsOpen    bool   `json:"isOpen"`
+	IsOpen    int    `json:"isOpen"`
 	Url       string `json:"url"`
 	Trigger   string `json:"trigger"`
-	CreatedAt string `json:"createdAt"`
+	CreatedAt int64  `json:"createdAt"`
 }
 
 func main() {
 	apex.HandleFunc(func(event json.RawMessage, ctx *apex.Context) (interface{}, error) {
+		db := dynamo.New(session.New(), &aws.Config{
+			Region: aws.String("ap-northeast-1"),
+		})
+		table := db.Table("Alert")
+
 		var alerts []Alert
 
-		alerts = append(alerts, Alert{
-			Id:        "35UYbW8t1j5",
-			OrgName:   "gazou",
-			Title:     "prd-db/check_load: CheckLoad CRITICAL: Per core load average (12 CPU): [3.58, 3.49, 2.31]",
-			Status:    "critical",
-			IsOpen:    true,
-			Url:       "https://example.com/alert",
-			Trigger:   "monitor",
-			CreatedAt: "2017-09-07 18:41:44 +0900",
-		})
-
-		alerts = append(alerts, Alert{
-			Id:        "123ABCDEFG",
-			OrgName:   "gazou",
-			Title:     "prd-db/check_load: CheckLoad OK: Per core load average (12 CPU): [0.08, 1.29, 1.90]",
-			Status:    "ok",
-			IsOpen:    false,
-			Url:       "https://example.com/alert",
-			Trigger:   "monitor",
-			CreatedAt: "2017-09-07 20:30:00 +0900",
-		})
+		if err := table.Get("OrgName", "Macker...").All(&alerts); err != nil {
+			return nil, err
+		}
 
 		return Alerts{
 			Alerts: alerts,
