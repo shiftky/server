@@ -29,11 +29,28 @@ resource "aws_api_gateway_method" "get_alerts" {
   authorization = "NONE"
 }
 
+resource "aws_api_gateway_method" "post_alerts" {
+  rest_api_id   = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
+  resource_id   = "${aws_api_gateway_resource.alerts.id}"
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
 ## method response
 resource "aws_api_gateway_method_response" "get_alerts_200" {
   rest_api_id     = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
   resource_id     = "${aws_api_gateway_resource.alerts.id}"
   http_method     = "${aws_api_gateway_method.get_alerts.http_method}"
+  response_models = {
+    "application/json" = "Empty"
+  }
+  status_code     = "200"
+}
+
+resource "aws_api_gateway_method_response" "post_alerts_200" {
+  rest_api_id     = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
+  resource_id     = "${aws_api_gateway_resource.alerts.id}"
+  http_method     = "${aws_api_gateway_method.post_alerts.http_method}"
   response_models = {
     "application/json" = "Empty"
   }
@@ -47,7 +64,18 @@ resource "aws_api_gateway_integration" "get_alerts" {
   http_method             = "${aws_api_gateway_method.get_alerts.http_method}"
   type                    = "AWS"
   integration_http_method = "POST"
+  content_handling        = "CONVERT_TO_TEXT"
   uri = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${lookup(var.apex_function_arns, "get_alerts")}/invocations"
+}
+
+resource "aws_api_gateway_integration" "post_alerts" {
+  rest_api_id             = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
+  resource_id             = "${aws_api_gateway_resource.alerts.id}"
+  http_method             = "${aws_api_gateway_method.post_alerts.http_method}"
+  type                    = "AWS"
+  integration_http_method = "POST"
+  content_handling        = "CONVERT_TO_TEXT"
+  uri = "arn:aws:apigateway:${var.aws_region}:lambda:path/2015-03-31/functions/${lookup(var.apex_function_arns, "post_alerts")}/invocations"
 }
 
 ## integration response
@@ -58,13 +86,23 @@ resource "aws_api_gateway_integration_response" "get_alerts_200" {
   status_code = "${aws_api_gateway_method_response.get_alerts_200.status_code}"
 }
 
+resource "aws_api_gateway_integration_response" "post_alerts_200" {
+  rest_api_id = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
+  resource_id = "${aws_api_gateway_resource.alerts.id}"
+  http_method = "${aws_api_gateway_method.post_alerts.http_method}"
+  status_code = "${aws_api_gateway_method_response.post_alerts_200.status_code}"
+}
+
 
 #
 # deployment
 #
 
 resource "aws_api_gateway_deployment" "incident-app-team-a" {
-  depends_on  = ["aws_api_gateway_method.get_alerts"]
+  depends_on  = [
+    "aws_api_gateway_method.get_alerts",
+    "aws_api_gateway_method.post_alerts"
+  ]
   rest_api_id = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
   stage_name  = "development"
 }
