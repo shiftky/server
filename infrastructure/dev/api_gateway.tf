@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_api_gateway_rest_api" "incident-app-team-a" {
   name = "incident-app-team-a"
 }
@@ -50,7 +52,6 @@ resource "aws_api_gateway_integration_response" "get_alerts_200" {
   http_method = "${aws_api_gateway_method.get_alerts.http_method}"
   status_code = "${aws_api_gateway_method_response.get_alerts_200.status_code}"
 }
-
 
 
 #
@@ -112,4 +113,24 @@ resource "aws_api_gateway_deployment" "incident-app-team-a" {
   ]
   rest_api_id = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
   stage_name  = "development"
+}
+
+
+#
+# Lambda Permission
+#
+resource "aws_lambda_permission" "get_alerts_allow_api_gateway" {
+  statement_id   = "AllowExecutionFromAPIGateway"
+  action         = "lambda:InvokeFunction"
+  function_name  = "${lookup(var.apex_function_arns, "get_alerts")}"
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "arn:aws:execute-api:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${aws_api_gateway_rest_api.incident-app-team-a.id}/*/GET/alerts"
+}
+
+resource "aws_lambda_permission" "post_alerts_allow_api_gateway" {
+  statement_id   = "AllowExecutionFromAPIGateway"
+  action         = "lambda:InvokeFunction"
+  function_name  = "${lookup(var.apex_function_arns, "post_alerts")}"
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "arn:aws:execute-api:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${aws_api_gateway_rest_api.incident-app-team-a.id}/*/POST/alerts/mackerel"
 }
