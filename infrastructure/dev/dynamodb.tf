@@ -1,15 +1,10 @@
+## Alert Table
 resource "aws_dynamodb_table" "alert_table" {
   name           = "Alert"
   read_capacity  = 5
   write_capacity = 5
   hash_key       = "OrgName"
   range_key      = "CreatedAt"
-
-  local_secondary_index {
-    name            = "OrgNameAlertIdIndex"
-    range_key       = "AlertId"
-    projection_type = "ALL"
-  }
 
   local_secondary_index {
     name            = "OrgNameStatusIndex"
@@ -31,11 +26,6 @@ resource "aws_dynamodb_table" "alert_table" {
   attribute {
     name = "CreatedAt"
     type = "N"
-  }
-
-  attribute {
-    name = "AlertId"
-    type = "S"
   }
 
   attribute {

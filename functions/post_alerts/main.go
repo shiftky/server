@@ -46,11 +46,10 @@ type MackerelWebhook struct {
 type AlertEvent struct {
 	OrgName   string `dynamo:"OrgName" json:"orgName"`
 	CreatedAt int64  `dynamo:"CreatedAt" json:"createdAt"`
-	AlertID   string `dynamo:"AlertId" json:"alertId"`
 	Status    string `dynamo:"Status" json:"status"`
 	IsOpen    int    `dynamo:"IsOpen" json:"isOpen"`
 	Title     string `dynamo:"Title" json:"title"`
-	AlertURL  string `dynamo:"AlertUrl" json:"alertUrl"`
+	URL       string `dynamo:"Url" json:"Url"`
 	Trigger   string `dynamo:"Trigger" json:"trigger"`
 }
 
@@ -62,11 +61,6 @@ func main() {
 			return nil, err
 		}
 
-		db := dynamo.New(session.New(), &aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		})
-		table := db.Table("Alert")
-
 		var isOpen int
 		if mackerel.Alert.IsOpen {
 			isOpen = 1
@@ -77,13 +71,17 @@ func main() {
 		evt := AlertEvent{
 			OrgName:   mackerel.OrgName,
 			CreatedAt: mackerel.Alert.CreatedAt,
-			AlertID:   "hogehoge123",
 			Status:    mackerel.Alert.Status,
 			IsOpen:    isOpen,
-			Title:     "hogehoge alert",
-			AlertURL:  mackerel.Alert.URL,
+			Title:     "alert", // TODO: generate alert title
+			URL:       mackerel.Alert.URL,
 			Trigger:   mackerel.Alert.Trigger,
 		}
+
+		db := dynamo.New(session.New(), &aws.Config{
+			Region: aws.String("ap-northeast-1"),
+		})
+		table := db.Table("Alert")
 
 		if err := table.Put(evt).Run(); err != nil {
 			return nil, err

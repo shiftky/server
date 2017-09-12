@@ -14,7 +14,6 @@ type Alerts struct {
 }
 
 type Alert struct {
-	Id        string `json:"id"`
 	OrgName   string `json:"orgName"`
 	Title     string `json:"title"`
 	Status    string `json:"status"`
@@ -33,7 +32,7 @@ func main() {
 
 		var alerts []Alert
 
-		if err := table.Get("OrgName", "Macker...").All(&alerts); err != nil {
+		if err := table.Scan().All(&alerts); err != nil {
 			return nil, err
 		}
 
