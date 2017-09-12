@@ -53,6 +53,25 @@ type AlertEvent struct {
 	Trigger   string `dynamo:"Trigger" json:"trigger"`
 }
 
+func NewAlertEvent(mackerel MackerelWebhook) *AlertEvent {
+	var isOpen int
+	if mackerel.Alert.IsOpen {
+		isOpen = 1
+	} else {
+		isOpen = 0
+	}
+
+	return &AlertEvent{
+		OrgName:   mackerel.OrgName,
+		CreatedAt: mackerel.Alert.CreatedAt,
+		Status:    mackerel.Alert.Status,
+		IsOpen:    isOpen,
+		Title:     "alert", // TODO: generate alert title
+		URL:       mackerel.Alert.URL,
+		Trigger:   mackerel.Alert.Trigger,
+	}
+}
+
 func main() {
 	apex.HandleFunc(func(event json.RawMessage, ctx *apex.Context) (interface{}, error) {
 		var mackerel MackerelWebhook
@@ -61,22 +80,7 @@ func main() {
 			return nil, err
 		}
 
-		var isOpen int
-		if mackerel.Alert.IsOpen {
-			isOpen = 1
-		} else {
-			isOpen = 0
-		}
-
-		evt := AlertEvent{
-			OrgName:   mackerel.OrgName,
-			CreatedAt: mackerel.Alert.CreatedAt,
-			Status:    mackerel.Alert.Status,
-			IsOpen:    isOpen,
-			Title:     "alert", // TODO: generate alert title
-			URL:       mackerel.Alert.URL,
-			Trigger:   mackerel.Alert.Trigger,
-		}
+		evt := NewAlertEvent(mackerel)
 
 		db := dynamo.New(session.New(), &aws.Config{
 			Region: aws.String("ap-northeast-1"),
