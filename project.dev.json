@@ -1,0 +1,8 @@
+{
+  "name": "incident-app-team-a",
+  "description": "",
+  "memory": 128,
+  "timeout": 5,
+  "role": "arn:aws:iam::372545078849:role/incident-app-team-a_lambda_function",
+  "environment": {}
+}
