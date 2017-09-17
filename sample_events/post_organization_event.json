@@ -1,0 +1,6 @@
+{
+  "orgName": "payment",
+  "displayName": "課金",
+  "slackWebhookUrl": "https://example.com/hook",
+  "description": "foo"
+}
