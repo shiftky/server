@@ -43,3 +43,21 @@ resource "aws_dynamodb_table" "alert_table" {
     Environment = "development"
   }
 }
+
+## User Table
+resource "aws_dynamodb_table" "user_table" {
+  name           = "User"
+  read_capacity  = 5
+  write_capacity = 5
+  hash_key       = "CognitoId"
+
+  attribute {
+    name = "CognitoId"
+    type = "S"
+  }
+
+  tags {
+    Name        = "User Table"
+    Environment = "development"
+  }
+}
