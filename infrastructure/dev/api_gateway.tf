@@ -111,6 +111,7 @@ resource "aws_api_gateway_deployment" "incident-app-team-a" {
   depends_on = [
     "aws_api_gateway_method.get_alerts",
     "aws_api_gateway_method.post_alerts_mackerel",
+    "aws_api_gateway_method.post_users",
   ]
 
   rest_api_id = "${aws_api_gateway_rest_api.incident-app-team-a.id}"
